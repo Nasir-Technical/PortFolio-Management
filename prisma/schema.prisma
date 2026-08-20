@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  VIEWER
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  FREELANCE
+  INTERNSHIP
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  DRAFT
+}
+
+enum MediaType {
+  IMAGE
+  PDF
+  DOCUMENT
+  OTHER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?
+  name          String?
+  role          UserRole  @default(OWNER)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  portfolios   Portfolio[]
+  media        Media[]
+  socialLinks  SocialLink[]
+
+  @@map("users")
+}
+
+model Portfolio {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  slug        String   @unique
+  description String?
+  type        String?
+  status      Visibility @default(DRAFT)
+  seoTitle    String?
+  seoDescription String?
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile      Profile?
+  cvs          CV[]
+  theme        PortfolioTheme?
+  experiences  Experience[]
+  educations   Education[]
+  projects     PortfolioProject[]
+  skills       PortfolioSkill[]
+
+  @@unique([userId, slug])
+  @@map("portfolios")
+}
+
+model Profile {
+  id                String   @id @default(cuid())
+  portfolioId       String   @unique
+  fullName          String
+  professionalTitle String?
+  shortBio          String?
+  longBio           String?
+  profileImage      String?
+  location          String?
+  email             String?
+  contactInfo       Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model CV {
+  id          String   @id @default(cuid())
+  portfolioId String
+  filename    String
+  url         String
+  fileSize    Int?
+  mimeType    String?
+  isActive    Boolean  @default(false)
+  uploadedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@map("cvs")
+}
+
+model Theme {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  config      Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  portfolios PortfolioTheme[]
+
+  @@map("themes")
+}
+
+model PortfolioTheme {
+  id          String   @id @default(cuid())
+  portfolioId String   @unique
+  themeId     String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  theme     Theme     @relation(fields: [themeId], references: [id])
+
+  @@unique([portfolioId, themeId])
+  @@map("portfolio_themes")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  detailedDescription String?
+  thumbnail   String?
+  technologies String[] @default([])
+  githubUrl   String?
+  liveUrl     String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      ProjectStatus @default(PLANNING)
+  featured    Boolean  @default(false)
+  visibility  Visibility @default(PUBLIC)
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  portfolios PortfolioProject[]
+
+  @@map("projects")
+}
+
+model PortfolioProject {
+  id          String   @id @default(cuid())
+  portfolioId String
+  projectId   String
+  displayOrder Int     @default(0)
+  featured    Boolean  @default(false)
+  visibility  Visibility @default(PUBLIC)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, projectId])
+  @@map("portfolio_projects")
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  category    String?
+  icon        String?
+  level       Int?
+  yearsOfExperience Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  portfolios PortfolioSkill[]
+
+  @@map("skills")
+}
+
+model PortfolioSkill {
+  id               String   @id @default(cuid())
+  portfolioId      String
+  skillId          String
+  level            Int?
+  yearsOfExperience Int?
+  displayOrder     Int     @default(0)
+  visibility       Visibility @default(PUBLIC)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  skill     Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, skillId])
+  @@map("portfolio_skills")
+}
+
+model Experience {
+  id            String         @id @default(cuid())
+  portfolioId   String
+  company       String
+  position      String
+  description   String?
+  location      String?
+  employmentType EmploymentType @default(FULL_TIME)
+  startDate     DateTime
+  endDate       DateTime?
+  isCurrent     Boolean        @default(false)
+  technologies  String[]       @default([])
+  displayOrder  Int            @default(0)
+  visibility    Visibility     @default(PUBLIC)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@map("experiences")
+}
+
+model Education {
+  id            String   @id @default(cuid())
+  portfolioId   String
+  institution   String
+  degree        String
+  field         String?
+  description   String?
+  startDate     DateTime
+  endDate       DateTime?
+  grade         String?
+  displayOrder  Int      @default(0)
+  visibility    Visibility @default(PUBLIC)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@map("educations")
+}
+
+model Media {
+  id          String     @id @default(cuid())
+  userId      String
+  filename    String
+  url         String
+  mimeType    String?
+  size        Int?
+  width       Int?
+  height      Int?
+  type        MediaType  @default(IMAGE)
+  uploadedAt  DateTime   @default(now())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("media")
+}
+
+model SocialLink {
+  id        String   @id @default(cuid())
+  userId    String
+  platform  String
+  url       String
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+  @@map("social_links")
+}
