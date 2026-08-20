@@ -1,0 +1,64 @@
+# Dependencies & Workspaces
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+
+# Build & Compilation Outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Environment Files (Keep secrets out of Git!)
+.env
+.env.*
+!.env.example
+
+# Database & Prisma
+prisma/*.db
+prisma/*.db-journal
+# Generated Prisma client ko ignore na karein agar monorepo me local generate kar rahe hain,
+# lekin agar node_modules me ja raha hai to default handle ho jata hai.
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+cypress/videos/
+cypress/screenshots/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs & System Files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Cache Folders
+.cache/
+.eslintcache
+.turbo/
